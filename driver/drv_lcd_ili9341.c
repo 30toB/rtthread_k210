@@ -234,18 +234,11 @@ static void drv_lcd_clear(lcd_8080_device_t lcd, uint16_t color)
     drv_lcd_set_area(lcd, 0, 0, lcd->lcd_info.width - 1, lcd->lcd_info.height - 1);
     gpiohs_set_pin(lcd->dc_pin, GPIO_PV_HIGH);
 
-    #if 1
     spi_init(lcd->spi_channel, SPI_WORK_MODE_0, SPI_FF_OCTAL, 32, 0);
     spi_init_non_standard(lcd->spi_channel, 0 /*instrction length*/, 32 /*address length*/, 0 /*wait cycles*/,
                           SPI_AITM_AS_FRAME_FORMAT /*spi address trans mode*/);
     
     spi_fill_data_dma(lcd->dma_channel, lcd->spi_channel, lcd->cs, (const uint32_t *)&data, lcd->lcd_info.width * lcd->lcd_info.height / 2);
-    #else
-    spi_init(lcd->spi_channel, SPI_WORK_MODE_0, SPI_FF_OCTAL, 16, 0);
-    spi_init_non_standard(lcd->spi_channel, 16 /*instrction length*/, 0 /*address length*/, 0 /*wait cycles*/,
-                          SPI_AITM_AS_FRAME_FORMAT /*spi address trans mode*/);
-    spi_send_data_normal_dma(lcd->dma_channel, lcd->spi_channel, lcd->cs, &data, lcd->lcd_info.width * lcd->lcd_info.height, SPI_TRANS_SHORT);
-    #endif
 }
 
 static void rt_bitblt(rt_uint16_t * dest, int dest_segment, int dest_common, int dest_x, int dest_y, int width, int height,
@@ -320,25 +313,34 @@ static void rt_bitblt(rt_uint16_t * dest, int dest_segment, int dest_common, int
         return;
     }
 
-    if ((rt_ubase_t)dest < (rt_ubase_t)src) {
+    if ((rt_ubase_t)dest < (rt_ubase_t)src) 
+    {
         buff_src = src + (sy0 * src_segment) + sx0;
         buff_dest = dest + (dy0 * dest_segment) + dx0;
-        for (y = sy0; y <= sy1; y++) {
+        
+        for (y = sy0; y <= sy1; y++) 
+        {
             src = buff_src;
             dest = buff_dest;
-            for (x = sx0; x <= sx1; x++) {
+            
+            for (x = sx0; x <= sx1; x++) 
+            {
                 *dest++ = *src++;
             }
             buff_src += src_segment;
             buff_dest += dest_segment;
         }
-    } else {
+    }
+    else 
+    {
         buff_src = src + (sy1 * src_segment) + sx1;
         buff_dest = dest + (dy1 * dest_segment) + dx1;
-        for (y = sy1; y >= sy0; y--) {
+        for (y = sy1; y >= sy0; y--) 
+        {
             src = buff_src;
             dest = buff_dest;
-            for (x = sx1; x >= sx0; x--) {
+            for (x = sx1; x >= sx0; x--) 
+            {
                 *dest-- = *src--;
             }
             buff_src -= src_segment;
@@ -361,14 +363,15 @@ static void drv_lcd_rect_update(lcd_8080_device_t lcd, uint16_t x1, uint16_t y1,
     if(x1 == 0 && y1 == 0 && width == lcd->lcd_info.width && height == lcd->lcd_info.height)
     {
         drv_lcd_set_area(lcd, x1, y1, x1 + width - 1, y1 + height - 1);
-        drv_lcd_data_word(lcd, (rt_uint32_t *)lcd->lcd_info.framebuffer, width * height / (lcd->lcd_info.bits_per_pixel / 8));
+        drv_lcd_data_half_word(lcd, (rt_uint16_t *)lcd->lcd_info.framebuffer, width * height);
     }
     else
     {
         rt_bitblt(rect_buffer, width, height, 0, 0, width, height,
             (rt_uint16_t *)lcd->lcd_info.framebuffer, lcd->lcd_info.width, lcd->lcd_info.height, x1, y1);
         drv_lcd_set_area(lcd, x1, y1, x1 + width - 1, y1 + height - 1);
-        drv_lcd_data_word(lcd, (rt_uint32_t *)rect_buffer, width * height / 2);
+        //drv_lcd_data_word(lcd, (rt_uint32_t *)rect_buffer, width * height / 2);
+        drv_lcd_data_half_word(lcd, rect_buffer, width * height);
     }
 }
 
@@ -457,38 +460,38 @@ static rt_err_t drv_lcd_control(rt_device_t dev, int cmd, void *args)
 
     switch (cmd)
     {
-    case RTGRAPHIC_CTRL_RECT_UPDATE:
-        if(!rect_info)
-        {
-            LOG_E("RTGRAPHIC_CTRL_RECT_UPDATE error args");
-            return -RT_ERROR;
-        }
-        drv_lcd_rect_update(lcd, rect_info->x, rect_info->y, rect_info->width, rect_info->height);
-        break;
+        case RTGRAPHIC_CTRL_RECT_UPDATE:
+            if(!rect_info)
+            {
+                LOG_E("RTGRAPHIC_CTRL_RECT_UPDATE error args");
+                return -RT_ERROR;
+            }
+            drv_lcd_rect_update(lcd, rect_info->x, rect_info->y, rect_info->width, rect_info->height);
+            break;
 
-    case RTGRAPHIC_CTRL_POWERON:
-        /* Todo: power on */
-        ret = -RT_ENOSYS;
-        break;
+        case RTGRAPHIC_CTRL_POWERON:
+            /* Todo: power on */
+            ret = -RT_ENOSYS;
+            break;
 
-    case RTGRAPHIC_CTRL_POWEROFF:
-        /* Todo: power off */
-        ret = -RT_ENOSYS;
-        break;
+        case RTGRAPHIC_CTRL_POWEROFF:
+            /* Todo: power off */
+            ret = -RT_ENOSYS;
+            break;
 
-    case RTGRAPHIC_CTRL_GET_INFO:
-        *(struct rt_device_graphic_info *)args = lcd->lcd_info;
-        break;
+        case RTGRAPHIC_CTRL_GET_INFO:
+            *(struct rt_device_graphic_info *)args = lcd->lcd_info;
+            break;
 
-    case RTGRAPHIC_CTRL_SET_MODE:
-        ret = -RT_ENOSYS;
-        break;
-    case RTGRAPHIC_CTRL_GET_EXT:
-        ret = -RT_ENOSYS;
-        break;
-    default:
-        LOG_E("drv_lcd_control cmd: %d", cmd);
-        break;
+        case RTGRAPHIC_CTRL_SET_MODE:
+            ret = -RT_ENOSYS;
+            break;
+        case RTGRAPHIC_CTRL_GET_EXT:
+            ret = -RT_ENOSYS;
+            break;
+        default:
+            LOG_E("drv_lcd_control cmd: %d", cmd);
+            break;
     }
 
     return ret;
@@ -523,6 +526,7 @@ int rt_hw_lcd_init(void)
     lcd_dev->spi_channel                = SPI_DEVICE_0;
     lcd_dev->lcd_info.bits_per_pixel    = 16;
     lcd_dev->lcd_info.pixel_format      = RTGRAPHIC_PIXEL_FORMAT_RGB565;
+    
 
     lcd_dev->dev.type        = RT_Device_Class_Graphic;
     lcd_dev->dev.rx_indicate = RT_NULL;
@@ -539,7 +543,7 @@ int rt_hw_lcd_init(void)
     lcd_dev->dev.control = drv_lcd_control;
 #endif
 
-    lcd_dev->dev.user_data = RT_NULL;
+    lcd_dev->dev.user_data = &lcd_dev->lcd_info;
 
     ret = rt_device_register(&lcd_dev->dev, "lcd_9341", RT_DEVICE_FLAG_RDWR);
 

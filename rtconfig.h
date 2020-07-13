@@ -111,6 +111,8 @@
 #define RT_SFUD_USING_FLASH_INFO_TABLE
 #define RT_SFUD_SPI_MAX_HZ 50000000
 #define RT_DEBUG_SFUD
+#define RT_USING_SENSOR
+#define RT_USING_SENSOR_CMD
 
 /* Using USB */
 
@@ -164,15 +166,36 @@
 
 /* multimedia packages */
 
+#define PKG_USING_TJPGD
+#define TJPGD_INPUT_BUFFER_SIZE 512
+#define TJPGD_USING_FORMAT_RGB888
+#define TJPGD_USING_SCALE
+#define TJPGD_USING_TBLCLIP
+#define PKG_TJPGD_SAMPLE
+#define PKG_USING_TJPGD_LATEST_VERSION
 
 /* tools packages */
 
 
 /* system packages */
 
+#define PKG_USING_LITTLEVGL2RTT
+#define PKG_USING_LITTLEVGL2RTT_LATEST_VERSION
+
+/* LittlevGL2RTT Options */
+
+#define LV_MEM_DYNAMIC
+#define LV_MEM_CUSTOM 1
+#define LV_COLOR_DEPTH_16
+#define LV_COLOR_DEPTH 16
+#define LV_HOR_RES 320
+#define LV_VER_RES 240
+#define LV_DPI 50
+#define LITTLEVGL2RTT_USING_DEMO
 
 /* peripheral libraries and drivers */
 
+#define PKG_USING_SENSORS_DRIVERS
 #define PKG_USING_KENDRYTE_SDK
 #define PKG_USING_KENDRYTE_SDK_V055
 #define PKG_KENDRYTE_SDK_VERNUM 0x0055

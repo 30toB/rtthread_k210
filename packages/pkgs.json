@@ -1,5 +1,15 @@
 [
  {
+  "path": "/packages/multimedia/TJpgDec", 
+  "ver": "latest", 
+  "name": "TJPGD"
+ }, 
+ {
+  "path": "/packages/system/LittlevGL2RTT", 
+  "ver": "latest", 
+  "name": "LITTLEVGL2RTT"
+ }, 
+ {
   "path": "/packages/peripherals/kendryte-sdk", 
   "ver": "v0.5.5", 
   "name": "KENDRYTE_SDK"
