@@ -85,24 +85,21 @@ static void disp_flush(lv_disp_drv_t *disp_drv, const lv_area_t *area, lv_color_
     lv_disp_flush_ready(disp_drv);
 }
 
-static void lvgl_tick_run(void *p)
-{
-    while (1)
-    {
-        lv_tick_inc(20);
-        rt_thread_delay(20);
-    }
-}
-
+//-----------------------------------------------------------------------------
+// lvgl_handle_thread
+// lvgl业务处理函数
+//-----------------------------------------------------------------------------
 static void lvgl_handle_thread(void *p)
 {
-    rt_tick_t t = RT_TICK_PER_SECOND / 60;
+    rt_tick_t t = RT_TICK_PER_SECOND / 30;
     rt_tick_t start, end;
     uint32_t fps = 0;
 
     while (1)
     {
         start = rt_tick_get();
+
+        lv_tick_inc(t);
         
         lv_task_handler();
         
@@ -116,10 +113,16 @@ static void lvgl_handle_thread(void *p)
             t++;
         else
             t--;
-        if (t > RT_TICK_PER_SECOND) t = 0;
+        
+        if (t > RT_TICK_PER_SECOND)
+            t = 0;
     }
 }
 
+//-----------------------------------------------------------------------------
+// littlevgl2rtt_log_register
+// lvgl日志注册函数
+//-----------------------------------------------------------------------------
 #if USE_LV_LOG
 void littlevgl2rtt_log_register(lv_log_level_t level, const char *file, uint32_t line, const char *dsc)
 {
@@ -137,6 +140,10 @@ void littlevgl2rtt_log_register(lv_log_level_t level, const char *file, uint32_t
 }
 #endif
 
+//-----------------------------------------------------------------------------
+// littlevgl2rtt_init
+// lvgl初始化函数
+//-----------------------------------------------------------------------------
 static int littlevgl2rtt_init(void)
 {
     static lv_disp_buf_t disp_buf;
@@ -184,7 +191,7 @@ static int littlevgl2rtt_init(void)
     disp_drv.flush_cb = disp_flush;
     disp_drv.buffer   = &disp_buf;
 
-    //输入设备注册
+    //显示设备注册
     lv_disp_drv_register(&disp_drv);
 
     /*
@@ -197,17 +204,10 @@ static int littlevgl2rtt_init(void)
     lv_indev_drv_register(&indev_drv);
     */
 
-    /* littlevGL Tick thread */
+    /* littlevGL Tick thread, 一定要有一个线程的优先级高于此线程，否则屏幕无法刷新，原因未知 */
     rt_thread_t thread = RT_NULL;
-
-    thread = rt_thread_create("lv_tick", lvgl_tick_run, RT_NULL, 1024, 6, 10);
-    if (thread == RT_NULL)
-    {
-        return RT_ERROR;
-    }
-    rt_thread_startup(thread);
-
-    thread = rt_thread_create("lvgl", lvgl_handle_thread, RT_NULL, 8192, 10, 100);
+    
+    thread = rt_thread_create("lvgl", lvgl_handle_thread, RT_NULL, 8192, 16, 100);
     if (thread == RT_NULL)
     {
         return RT_ERROR;
