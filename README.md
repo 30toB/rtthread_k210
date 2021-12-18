@@ -56,7 +56,8 @@ Kendryte中文含义为勘智，而勘智取自勘物探智。这颗芯片主要
 
     set RTT_EXEC_PATH=your_toolchains
     scons
-
+工具链路径设置需要注意，例如：c:\\RISC-V Embedded GCC\8.2.0-2.2-20190521-0004\bin\
+即盘符后面要加上“\\”
 来编译这个板级支持包。如果编译正确无误，会产生rtthread.elf、rtthread.bin文件。其中rtthread.bin需要烧写到设备中进行运行。
 
 ！！！此工程不能使用官方发布的改版的工具链编译，需要使用gnu-mcu-eclipse-riscv-none-gcc。
